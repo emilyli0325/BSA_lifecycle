@@ -1,18 +1,18 @@
 ### Sanger data clean-up, vcf download from: ftp://ngs.sanger.ac.uk/production/pf3k/release_5/
 
-java -jar /master/xli/software/GATK/GenomeAnalysisTK.jar \
+java -jar GenomeAnalysisTK.jar \
 -T SelectVariants \
--R /master/xli/Index/Pfal32_GATK_index/PlasmoDB-32_Pfalciparum3D7_Genome.fasta \
--L /master/xli/Index/Known_sites/Core_Genome.intervals \
+-R ./PlasmoDB-32_Pfalciparum3D7_Genome.fasta \
+-L ./Core_Genome.intervals \
 -V T2.SangerR5.SNP.rm.MOI.and.lowCov.0.8GTLoci.MAF0.05.vcf.recode.vcf \
 --sample_file SangerSEasia.list -nt 10 \
 -o SangerR5.SEasia.vcf ### 678 samples
 
-java -jar /master/xli/software/GATK/GenomeAnalysisTK.jar \
+java -jar GenomeAnalysisTK.jar \
    -T SelectVariants \
-   -R /master/xli/Index/Pfal32_GATK_index/PlasmoDB-32_Pfalciparum3D7_Genome.fasta \
-   -L /master/xli/Index/Known_sites/Core_Genome.intervals \
-   -V /data/infectious/malaria_XUE/cross/Parents/mergeAllparents/GT.di/Parent.08272019.11Samples.SNP.hardfilter.di.vcf \
+   -R ./PlasmoDB-32_Pfalciparum3D7_Genome.fasta \
+   -L ./Core_Genome.intervals \
+   -V ./Parent.08272019.11Samples.SNP.hardfilter.di.vcf \
    --concordance SangerR5.SEasia.vcf \
    -o BSAParents.vcf 
 
@@ -20,17 +20,14 @@ java -jar /master/xli/software/GATK/GenomeAnalysisTK.jar \
 bgzip -c SangerR5.SEasia.vcf > SangerR5.SEasia.vcf.gz
 bgzip -c BSAParents.vcf  > BSAParents.vcf.gz
 for f in *.vcf.gz; do tabix -p vcf $f; done
-
-bcftools merge --merge none  -R /master/xli/Index/Known_sites/Core.bed --output-type z --output Sanger.SEAsia_BSAparents.vcf.gz SangerR5.SEasia.vcf.gz BSAParents.vcf.gz
-
+bcftools merge --merge none  -R ./Known_sites/Core.bed --output-type z --output Sanger.SEAsia_BSAparents.vcf.gz SangerR5.SEasia.vcf.gz BSAParents.vcf.gz
 tabix -p vcf Sanger.SEAsia_BSAparents.vcf.gz
 
-
 # HetFilter
-java -jar /master/xli/software/GATK/GenomeAnalysisTK.jar \
+java -jar GenomeAnalysisTK.jar \
 -T VariantFiltration \
--R /master/xli/Index/Pfal32_GATK_index/PlasmoDB-32_Pfalciparum3D7_Genome.fasta \
--L /master/xli/Index/Known_sites/Core_Genome.intervals \
+-R ./PlasmoDB-32_Pfalciparum3D7_Genome.fasta \
+-L ./Core_Genome.intervals \
 --variant Sanger.SEAsia_BSAparents.vcf.gz \
 --genotypeFilterExpression "isHet == 1" \
 --genotypeFilterName "HetFilter" \
@@ -40,10 +37,10 @@ java -jar /master/xli/software/GATK/GenomeAnalysisTK.jar \
 gunzip Sanger.SEAsia_BSAparents.isHet.vcf.gz
 
 # remove loci with low GT rate
-java -jar /master/xli/software/GATK/GenomeAnalysisTK.jar \
+java -jar GenomeAnalysisTK.jar \
 -T SelectVariants \
--R /master/xli/Index/Pfal32_GATK_index/PlasmoDB-32_Pfalciparum3D7_Genome.fasta \
--L /master/xli/Index/Known_sites/Core_Genome.intervals \
+-R ./PlasmoDB-32_Pfalciparum3D7_Genome.fasta \
+-L ./Core_Genome.intervals \
 -V Sanger.SEAsia_BSAparents.isHet.vcf \
 --excludeFiltered \
 --excludeNonVariants \
@@ -81,7 +78,7 @@ library(ggplot2)
 library(ggridges)
 library(gridExtra)
 
-setwd("C:/Users/xli/Documents/Emily/PublicationANDreview/2019_paper_submission/BSAfor.PG/Review1/PCA")
+setwd("")
 
 seqVCF2GDS("Sanger.SEAsia_BSAparents.clean.vcf.recode.vcf", "Sanger.SEAsia_BSAparents.gds")
 genofile <- seqOpen("Sanger.SEAsia_BSAparents.gds")
@@ -89,7 +86,6 @@ pca <- snpgdsPCA(genofile, autosome.only=FALSE, num.thread=4)
 > pc.percent <- pca$varprop*100
 > head(round(pc.percent, 2))
 [1] 9.27 4.38 3.68 2.38 1.88 1.49
-
 
 tab <- data.frame(sample.id = pca$sample.id,
     EV1 = pca$eigenvect[,1],    
@@ -115,12 +111,9 @@ filScale <- scale_fill_manual(name = "Country",values = myColors)
 MKK2835.2G: geom_point(data=tab.C[2, ], aes(x=EV1,y=EV2), shape = 24, color = "black", fill ="red", size=4)
 NHP1337.12C: geom_point(data=tab.C[3, ], aes(x=EV1,y=EV2), shape = 24,  color = "black", fill ="blue", size=4)
 
-
 P.PCA1.2 <- ggplot(tab.C, aes(x=EV1,y=EV2, fill = Country, shape = Country)) + geom_point(size = 2) + labs(x="PC1 (9.27%)",  y = "PC2 (4.38%)") + theme_bw(base_size = 16) + shapeScale + filScale + geom_point(data=tab.C[2, ], aes(x=EV1,y=EV2), shape = 24, color = "black", fill ="red", size=4) + geom_point(data=tab.C[3, ], aes(x=EV1,y=EV2), shape = 24,  color = "black", fill ="blue", size=4)
 
 P.PCA2.3 <- ggplot(tab.C, aes(x=EV3,y=EV2, fill = Country, shape = Country)) + geom_point(size = 2) + labs(x="PC3 (3.68%)",  y = "PC2 (4.38%)") + theme_bw(base_size = 16) + shapeScale + filScale + geom_point(data=tab.C[2, ], aes(x=EV1,y=EV2), shape = 24, color = "black", fill ="red", size=4) + geom_point(data=tab.C[3, ], aes(x=EV1,y=EV2), shape = 24,  color = "black", fill ="blue", size=4)
-
-
 
 pdf('PCA.pdf', width=16, height=6)
 grid.arrange(P.PCA1.2,P.PCA2.3,
