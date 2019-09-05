@@ -1,6 +1,4 @@
-# BSA_lifecycle
-
-Genetic mapping of fitness determinants across the malaria parasite Plasmodium falciparum life cycle
+# Genetic mapping of fitness determinants across the malaria parasite Plasmodium falciparum life cycle
 
 Xue Li, Sudhir Kumar, Marina McDew-White, Meseret Haile, Ian H. Cheeseman, Scott Emrich, Katie Button-Simons, François Nosten, Stefan H.I. Kappe, Michael T. Ferdig, Tim J.C. Anderson and Ashley M. Vaughan
 
